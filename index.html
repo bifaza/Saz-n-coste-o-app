@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Ventas</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; max-width: 600px; margin: auto; }
+        h1 { text-align: center; color: #d35400; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .titulo-seccion { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-group { display: flex; gap: 5px; align-items: center; }
+        button { padding: 8px 15px; border: none; border-radius: 5px; font-size: 1.2em; cursor: pointer; color: white; touch-action: manipulation; }
+        .btn-mas { background-color: #27ae60; }
+        .btn-menos { background-color: #c0392b; }
+        .contador { font-size: 1.2em; font-weight: bold; width: 30px; text-align: center; }
+        .precio-info { font-size: 0.8em; color: #777; display: block; }
+        .total-box { background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px; position: sticky; bottom: 0; }
+        .reset-btn { background-color: #7f8c8d; width: 100%; margin-top: 10px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <h1>🍖 Control de Caja</h1>
+
+    <div class="card">
+        <div class="titulo-seccion">Platos Fuertes</div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>Picaditas</strong>
+            
+            <div class="item-row">
+                <div>
+                    <span class="precio-info">Mesa ($4.00)</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-menos" onclick="cambiar('picadita_mesa', -1)">-</button>
+                    <span id="span_picadita_mesa" class="contador">0</span>
+                    <button class="btn-mas" onclick="cambiar('picadita_mesa', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <div>
+                    <span class="precio-info">Para Llevar ($4.25)</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-menos" onclick="cambiar('picadita_llevar', -1)">-</button>
+                    <span id="span_picadita_llevar" class="contador">0</span>
+                    <button class="btn-mas" onclick="cambiar('picadita_llevar', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div>
+            <strong>Caldos de Manguera</strong>
+            
+            <div class="item-row">
+                <div>
+                    <span class="precio-info">Mesa ($4.00)</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-menos" onclick="cambiar('caldo_mesa', -1)">-</button>
+                    <span id="span_caldo_mesa" class="contador">0</span>
+                    <button class="btn-mas" onclick="cambiar('caldo_mesa', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <div>
+                    <span class="precio-info">Para Llevar ($4.25)</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-menos" onclick="cambiar('caldo_llevar', -1)">-</button>
+                    <span id="span_caldo_llevar" class="contador">0</span>
+                    <button class="btn-mas" onclick="cambiar('caldo_llevar', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="titulo-seccion">Bebidas ($0.75 c/u)</div>
+        <div id="bebidas-container">
+            </div>
+    </div>
+
+    <div class="total-box">
+        <div style="font-size: 0.9em;">Total Vendido Hoy:</div>
+        <div id="total-dinero" style="font-size: 2em; font-weight: bold;">$0.00</div>
+        <div id="resumen-texto" style="font-size: 0.8em; margin-top: 5px;">Cargando...</div>
+        
+        <button class="reset-btn" onclick="reiniciarDia()">🗑️ Cerrar Caja / Reiniciar</button>
+    </div>
+
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE (PASO 1) ---
+        // Borra lo de abajo y pega lo que copiaste de Firebase
+        const firebaseConfig = {
+  apiKey: "AIzaSyAIPTdjtcrpk1tziuPq0yOZIXfHWnugxcQ",
+  authDomain: "sazoncosteno-3d6e2.firebaseapp.com",
+  projectId: "sazoncosteno-3d6e2",
+  storageBucket: "sazoncosteno-3d6e2.firebasestorage.app",
+  messagingSenderId: "440978122168",
+  appId: "1:440978122168:web:3ad5bf278767ec00aa5b4d",
+  measurementId: "G-H34849VKPN"
+};
+        // -------------------------------------------------------
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Precios
+        const PRECIOS = {
+            comida_mesa: 4.00,
+            comida_llevar: 4.25,
+            bebida: 0.75
+        };
+
+        // Estado inicial (se llenará con datos de la nube)
+        let ventas = {
+            picadita_mesa: 0, picadita_llevar: 0,
+            caldo_mesa: 0, caldo_llevar: 0,
+            sprite: 0, fiora: 0, inka: 0, coca: 0, fanta: 0
+        };
+
+        const bebidasNombres = ['Sprite', 'Fiora', 'Inka', 'Coca Cola', 'Fanta'];
+
+        // Generar HTML de bebidas
+        const bebidasDiv = document.getElementById('bebidas-container');
+        bebidasNombres.forEach(bebida => {
+            const id = bebida.toLowerCase().replace(' ', ''); // ej: coca cola -> cocacola
+            const key = id.includes('coca') ? 'coca' : id; // ajuste simple para keys
+            
+            const html = `
+            <div class="item-row">
+                <span>${bebida}</span>
+                <div class="btn-group">
+                    <button class="btn-menos" onclick="window.cambiar('${key}', -1)">-</button>
+                    <span id="span_${key}" class="contador">0</span>
+                    <button class="btn-mas" onclick="window.cambiar('${key}', 1)">+</button>
+                </div>
+            </div>`;
+            bebidasDiv.innerHTML += html;
+        });
+
+        // Función para enviar cambios a la nube
+        window.cambiar = (item, cantidad) => {
+            const nuevoValor = (ventas[item] || 0) + cantidad;
+            if (nuevoValor < 0) return; // No permitir negativos
+
+            const updates = {};
+            updates['/ventas_hoy/' + item] = nuevoValor;
+            update(ref(db), updates);
+        };
+
+        // Función para reiniciar el día
+        window.reiniciarDia = () => {
+            if(confirm("¿Estás seguro de cerrar caja? Esto pondrá todo en CERO.")) {
+                const updates = {};
+                Object.keys(ventas).forEach(k => updates['/ventas_hoy/' + k] = 0);
+                update(ref(db), updates);
+            }
+        };
+
+        // ESCUCHAR CAMBIOS EN TIEMPO REAL
+        const ventasRef = ref(db, 'ventas_hoy');
+        onValue(ventasRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                ventas = { ...ventas, ...data };
+                actualizarPantalla();
+            }
+        });
+
+        function actualizarPantalla() {
+            let totalDinero = 0;
+            let totalPlatos = 0;
+            let totalBebidas = 0;
+
+            // Actualizar contadores y calcular dinero
+            for (const [key, cant] of Object.entries(ventas)) {
+                // Actualizar número en pantalla
+                const el = document.getElementById('span_' + key);
+                if(el) el.innerText = cant;
+
+                // Calcular dinero
+                if (key.includes('mesa')) {
+                    totalDinero += cant * PRECIOS.comida_mesa;
+                    totalPlatos += cant;
+                } else if (key.includes('llevar')) {
+                    totalDinero += cant * PRECIOS.comida_llevar;
+                    totalPlatos += cant;
+                } else {
+                    // Es bebida
+                    totalDinero += cant * PRECIOS.bebida;
+                    totalBebidas += cant;
+                }
+            }
+
+            document.getElementById('total-dinero').innerText = '$' + totalDinero.toFixed(2);
+            document.getElementById('resumen-texto').innerText = 
+                `${totalPlatos} Platos vendidos | ${totalBebidas} Bebidas vendidas`;
+        }
+    </script>
+</body>
+</html>
