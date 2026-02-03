@@ -3,190 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Negocio V3</title>
+    <title>Sistema V4 - Fusión Completa</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* TEMAS (Variables CSS) */
         :root {
-            --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #333;
-            --primary: #ff9f43; --accent: #ff6b6b; --btn-text: white;
-            --shadow: 0 4px 15px rgba(0,0,0,0.05); --radius: 16px;
+            --primary: #27ae60; --danger: #e74c3c; --info: #3498db;
+            --bg: #f4f6f7; --card: #ffffff; --text: #2c3e50;
         }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 160px; }
         
-        body.dark-mode {
-            --bg-color: #1e272e; --card-bg: #2d3436; --text-color: #dfe6e9;
-            --primary: #0984e3; --accent: #00cec9; --shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        /* Encabezado */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        h2 { margin: 0; color: #2c3e50; }
 
-        body.warm-mode { /* Por defecto */ }
+        /* Tarjetas */
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .section-title { font-size: 1.1em; font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 10px; color: #555; }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; padding-bottom: 140px; transition: 0.3s; }
+        /* Filas de Productos */
+        .row-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee; }
+        .item-desc { display: flex; flex-direction: column; }
+        .item-name { font-weight: bold; font-size: 0.95em; }
+        .item-price { font-size: 0.8em; color: #7f8c8d; }
 
-        /* HEADER & TEMAS */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .theme-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-color); }
+        /* Botones de Control */
+        .controls { display: flex; align-items: center; gap: 8px; }
+        .btn-circle { width: 35px; height: 35px; border-radius: 50%; border: none; font-weight: bold; color: white; font-size: 1.2em; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .btn-add { background-color: var(--primary); }
+        .btn-sub { background-color: var(--danger); opacity: 0.8; font-size: 1.5em; height: 30px; width: 30px; }
+        .badge { font-weight: bold; font-size: 1.1em; min-width: 20px; text-align: center; }
 
-        /* TARJETAS */
-        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
-        .titulo { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* Modal de Pago */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-box { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .btn-pay { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; font-weight: bold; font-size: 1em; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+        .pay-cash { background: var(--primary); }
+        .pay-trans { background: var(--info); }
+        .pay-cancel { background: #95a5a6; }
 
-        /* ACORDEÓN (DETAILS) */
-        details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
-        summary { background: var(--card-bg); padding: 15px; cursor: pointer; font-weight: bold; list-style: none; display: flex; justify-content: space-between; align-items: center; }
-        summary::after { content: '+'; font-size: 1.2rem; }
-        details[open] summary::after { content: '-'; }
-        details[open] summary { border-bottom: 1px solid #eee; background-color: rgba(0,0,0,0.02); }
-        .details-content { padding: 10px; }
+        /* Gastos */
+        .gasto-input { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-gasto { width: 100%; background: #d35400; color: white; padding: 10px; border: none; border-radius: 8px; font-weight: bold; }
 
-        /* ITEMS DE VENTA */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); }
-        .item-info div { font-size: 0.9rem; font-weight: 600; }
-        .item-price { font-size: 0.8rem; opacity: 0.7; }
-        
-        /* CONTADORES */
-        .btn-group { display: flex; align-items: center; gap: 8px; }
-        .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .btn-plus { background: var(--primary); color: white; }
-        .btn-minus { background: #e74c3c; color: white; opacity: 0.8; }
-        .btn-trash { background: none; color: #e74c3c; border: none; }
-        .count-badge { font-size: 0.9rem; font-weight: bold; min-width: 20px; text-align: center; }
+        /* Footer Totales */
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; padding: 15px; box-sizing: border-box; z-index: 100; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85em; margin-bottom: 10px; }
+        .stat-box { background: #f8f9fa; padding: 5px; border-radius: 5px; text-align: center; }
+        .total-big { text-align: center; font-size: 1.5em; font-weight: 800; color: #2c3e50; margin-bottom: 10px; }
+        .btn-close { width: 100%; background: #333; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; }
 
-        /* MODAL DE PAGO */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popUp 0.3s ease; }
-        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .btn-pay { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-efectivo { background: #27ae60; }
-        .btn-transf { background: #3498db; }
-        .btn-cancel { background: #95a5a6; }
-
-        /* FOOTER TOTALES */
-        .footer-total { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 100; }
-        .grid-totales { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; font-size: 0.8rem; }
-        .total-item { background: rgba(0,0,0,0.03); padding: 8px; border-radius: 8px; }
-        .total-big { font-size: 1.5rem; font-weight: 800; text-align: center; color: var(--primary); }
-        .btn-cerrar { width: 100%; background: var(--text-color); color: var(--bg-color); padding: 12px; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; }
-
-        /* GASTOS & INPUTS */
-        .input-modern { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 5px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); }
-        .btn-action { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; }
-
-        /* TABS */
-        .tabs { display: flex; margin-bottom: 15px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 12px; }
-        .tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #888; }
-        .tab.active { background: var(--card-bg); color: var(--primary); shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: #ddd; border-radius: 8px; font-weight: bold; font-size: 0.9em; cursor: pointer; }
+        .tab.active { background: #2c3e50; color: white; }
         .hidden { display: none; }
-        
-        .historial-card { border-left: 4px solid var(--primary); margin-bottom: 10px; padding: 10px; font-size: 0.85rem; background: rgba(0,0,0,0.02); }
+
+        /* Gráfica */
+        .chart-container { position: relative; height: 180px; width: 100%; margin-top: 10px; }
     </style>
 </head>
-<body class="warm-mode">
+<body>
 
     <div class="header">
-        <h2 style="margin:0;">🔥 Mi Negocio</h2>
-        <button class="theme-btn" onclick="cambiarTema()">🎨</button>
+        <h2>📊 Control Total</h2>
+        <small id="status">Conectando...</small>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="setTab('ventas')">Ventas</div>
-        <div class="tab" onclick="setTab('gastos')">Gastos</div>
-        <div class="tab" onclick="setTab('historial')">Historial</div>
+        <div class="tab active" onclick="cambiarTab('ventas')">Ventas</div>
+        <div class="tab" onclick="cambiarTab('gastos')">Gastos</div>
+        <div class="tab" onclick="cambiarTab('historial')">Historial</div>
     </div>
 
-    <div id="view-ventas">
-        
-        <details class="card">
-            <summary>🍖 Picadas</summary>
-            <div class="details-content">
-                <div id="lista-picadas"></div>
-            </div>
-        </details>
-
-        <details class="card">
-            <summary>🍲 Caldos de Manguera</summary>
-            <div class="details-content">
-                <div id="lista-caldos"></div>
-            </div>
-        </details>
+    <div id="tab-ventas">
+        <div class="card">
+            <div class="section-title">🍖 Picadas & Caldos</div>
+            <div id="lista-platos"></div> </div>
 
         <div class="card">
-            <div class="titulo">
-                🥤 Bebidas y Jugos
-                <button class="btn-circle btn-plus" style="width:24px; height:24px; font-size:0.8rem;" onclick="toggleAddBebida()">+</button>
+            <div class="section-title">🍊 Jugos Naturales</div>
+            <div id="lista-jugos"></div> </div>
+
+        <div class="card">
+            <div class="section-title" style="display:flex; justify-content:space-between;">
+                🥤 Bebidas / Extras
+                <button onclick="toggleFormBebida()" style="border:none; color:#3498db; background:none;">+ Agregar</button>
             </div>
             
-            <div id="form-bebida" class="hidden" style="background: rgba(0,0,0,0.03); padding:10px; border-radius:10px; margin-bottom:10px;">
-                <input type="text" id="new-bebida-name" placeholder="Nombre (ej: Jugo Mora)" class="input-modern">
-                <input type="number" id="new-bebida-price" placeholder="Precio (ej: 1.50)" class="input-modern">
-                <button class="btn-action" onclick="crearBebida()">Guardar</button>
+            <div id="form-bebida" class="hidden" style="background:#f0f8ff; padding:10px; margin-bottom:10px; border-radius:5px;">
+                <input type="text" id="new-name" placeholder="Nombre (ej: Coca Cola)" class="gasto-input">
+                <input type="number" id="new-price" placeholder="Precio (ej: 0.75)" class="gasto-input">
+                <button onclick="crearBebida()" style="background:#3498db; color:white; border:none; padding:8px; width:100%; border-radius:5px;">Guardar</button>
             </div>
 
-            <div id="lista-bebidas"></div>
+            <div id="lista-extras"></div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📈 Balance Visual</div>
+            <div class="chart-container">
+                <canvas id="miGrafica"></canvas>
+            </div>
         </div>
     </div>
 
-    <div id="view-gastos" class="hidden">
+    <div id="tab-gastos" class="hidden">
         <div class="card">
-            <div class="titulo">💸 Registrar Salida/Pérdida</div>
-            <input type="text" id="gasto-desc" placeholder="Motivo (ej: Vuelto, Hielo)" class="input-modern">
-            <input type="number" id="gasto-monto" placeholder="Monto $" class="input-modern">
-            <button class="btn-action" style="background: #e74c3c;" onclick="registrarGasto()">Registrar Gasto</button>
-        </div>
-        
-        <div class="card">
-            <div class="titulo">Movimientos de Hoy</div>
-            <ul id="lista-gastos-hoy" style="padding-left:20px; font-size:0.9rem;"></ul>
-        </div>
-    </div>
-
-    <div id="view-historial" class="hidden">
-        <div class="card">
-            <div class="titulo">📅 Cierres Anteriores</div>
-            <div id="lista-historial">Cargando...</div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="payment-modal">
-        <div class="modal-content">
-            <h3 id="modal-item-name" style="margin-top:0;">Producto</h3>
-            <p style="color:#777; font-size:0.9rem;">Selecciona el método de pago:</p>
+            <div class="section-title">💸 Registrar Pérdida / Gasto</div>
+            <input type="text" id="gasto-desc" placeholder="Motivo (ej: Hielo, Vuelto)" class="gasto-input">
+            <input type="number" id="gasto-monto" placeholder="Monto $" class="gasto-input">
+            <button class="btn-gasto" onclick="registrarGasto()">REGISTRAR SALIDA</button>
             
-            <button class="btn-pay btn-efectivo" onclick="confirmarPago('efectivo')">
-                <i class="fas fa-money-bill-wave"></i> Efectivo
+            <h4 style="margin-top:20px; border-bottom:1px solid #ccc;">Gastos de Hoy:</h4>
+            <ul id="lista-gastos-hoy" style="padding-left:20px; color:#c0392b;"></ul>
+        </div>
+    </div>
+
+    <div id="tab-historial" class="hidden">
+        <div class="card">
+            <div class="section-title">📅 Cierres Anteriores</div>
+            <div id="container-historial">Cargando...</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pago">
+        <div class="modal-box">
+            <h3 id="modal-titulo">Producto</h3>
+            <p>Selecciona método de pago:</p>
+            <button class="btn-pay pay-cash" onclick="pagar('efectivo')">
+                <i class="fas fa-money-bill"></i> Efectivo
             </button>
-            <button class="btn-pay btn-transf" onclick="confirmarPago('transferencia')">
+            <button class="btn-pay pay-trans" onclick="pagar('transferencia')">
                 <i class="fas fa-mobile-alt"></i> Transferencia
             </button>
-            <button class="btn-pay btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-pay pay-cancel" onclick="cerrarModal()">Cancelar</button>
         </div>
     </div>
 
-    <div class="footer-total">
-        <div class="grid-totales">
-            <div class="total-item" style="color: #27ae60;">
-                <i class="fas fa-money-bill"></i> Efec: <span id="lbl-efectivo">$0.00</span>
-            </div>
-            <div class="total-item" style="color: #3498db;">
-                <i class="fas fa-mobile"></i> Transf: <span id="lbl-transf">$0.00</span>
-            </div>
-            <div class="total-item" style="color: #e74c3c;">
-                <i class="fas fa-arrow-down"></i> Gastos: <span id="lbl-gastos">$0.00</span>
-            </div>
-            <div class="total-item" style="font-weight:bold;">
-                Neto: <span id="lbl-neto">$0.00</span>
-            </div>
+    <div class="footer">
+        <div class="stats-grid">
+            <div class="stat-box" style="color:#27ae60;">Efec: <b id="lbl-efec">$0.00</b></div>
+            <div class="stat-box" style="color:#3498db;">Trans: <b id="lbl-trans">$0.00</b></div>
+            <div class="stat-box" style="color:#e74c3c;">Gasto: <b id="lbl-gastos">$0.00</b></div>
+            <div class="stat-box">Neto: <b id="lbl-neto">$0.00</b></div>
         </div>
-        <div class="total-big" id="lbl-total-global">$0.00</div>
-        <button class="btn-cerrar" onclick="cerrarCaja()">🔒 CERRAR CAJA Y GUARDAR</button>
+        <div class="total-big">Total: <span id="lbl-total">$0.00</span></div>
+        <button class="btn-close" onclick="cerrarCaja()">🔒 CERRAR CAJA Y GUARDAR</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, push, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // --- ⬇️ PEGA AQUÍ TU LLAVE DE FIREBASE ⬇️ ---
-       const firebaseConfig = {
+        // ⚠️ PEGA AQUÍ TU CLAVE DE FIREBASE ⚠️
+        const firebaseConfig = {
   apiKey: "AIzaSyAIPTdjtcrpk1tziuPq0yOZIXfHWnugxcQ",
   authDomain: "sazoncosteno-3d6e2.firebaseapp.com",
   projectId: "sazoncosteno-3d6e2",
@@ -196,69 +167,259 @@
   measurementId: "G-H34849VKPN"
 };
 
-        // --------------------------------------------
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // DATA ESTRUCTURA
-        const menuPlatos = [
-            { id: 'pic_comp_mesa', nombre: 'Picada Completa (Mesa)', precio: 4.00, tipo: 'picadas' },
-            { id: 'pic_comp_llev', nombre: 'Picada Completa (Llevar)', precio: 4.25, tipo: 'picadas' },
-            { id: 'pic_med_mesa', nombre: 'Media Picada (Mesa)', precio: 3.00, tipo: 'picadas' },
-            { id: 'pic_med_llev', nombre: 'Media Picada (Llevar)', precio: 3.25, tipo: 'picadas' },
-            
-            { id: 'cal_comp_mesa', nombre: 'Caldo Completo (Mesa)', precio: 4.00, tipo: 'caldos' },
-            { id: 'cal_comp_llev', nombre: 'Caldo Completo (Llevar)', precio: 4.25, tipo: 'caldos' },
-            { id: 'cal_med_mesa', nombre: 'Medio Caldo (Mesa)', precio: 3.00, tipo: 'caldos' },
-            { id: 'cal_med_llev', nombre: 'Medio Caldo (Llevar)', precio: 3.25, tipo: 'caldos' }
+        // --- CONFIGURACIÓN DE PRODUCTOS FIJOS (LO QUE PEDISTE) ---
+        const menuFijo = [
+            // Picadas
+            { id: 'pic_comp_mesa', nombre: 'Picada Completa (Mesa)', precio: 4.00, cat: 'platos' },
+            { id: 'pic_comp_llev', nombre: 'Picada Completa (Llevar)', precio: 4.25, cat: 'platos' },
+            { id: 'pic_med_mesa', nombre: 'Media Picada (Mesa)', precio: 3.00, cat: 'platos' },
+            { id: 'pic_med_llev', nombre: 'Media Picada (Llevar)', precio: 3.25, cat: 'platos' },
+            // Caldos
+            { id: 'cal_comp_mesa', nombre: 'Caldo Completo (Mesa)', precio: 4.00, cat: 'platos' },
+            { id: 'cal_comp_llev', nombre: 'Caldo Completo (Llevar)', precio: 4.25, cat: 'platos' },
+            { id: 'cal_med_mesa', nombre: 'Medio Caldo (Mesa)', precio: 3.00, cat: 'platos' },
+            { id: 'cal_med_llev', nombre: 'Medio Caldo (Llevar)', precio: 3.25, cat: 'platos' },
+            // Jugos
+            { id: 'jugo_vaso', nombre: 'Jugo Vaso', precio: 0.50, cat: 'jugos' },
+            { id: 'jugo_jarra', nombre: 'Jugo Jarra', precio: 1.50, cat: 'jugos' }
         ];
 
-        let bebidasDinamicas = {};
+        let extrasConfig = {};
         let datosHoy = { ventas: {}, gastos: {} };
-        let itemPendiente = null; // Para el modal
+        let itemSeleccionado = null; // Para el modal
+        let miGrafica = null; // Para el chart
 
-        // 1. INICIALIZAR UI
-        function initMenu() {
-            const cPicadas = document.getElementById('lista-picadas');
-            const cCaldos = document.getElementById('lista-caldos');
+        // 1. RENDERIZAR MENÚ
+        function initUI() {
+            const cPlatos = document.getElementById('lista-platos');
+            const cJugos = document.getElementById('lista-jugos');
             
-            menuPlatos.forEach(item => {
-                const html = `
-                <div class="item-row">
-                    <div class="item-info">
-                        <div>${item.nombre}</div>
-                        <div class="item-price">$${item.precio.toFixed(2)}</div>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-circle btn-minus" onclick="window.restar('${item.id}')">-</button>
-                        <span id="cant_${item.id}" class="count-badge">0</span>
-                        <button class="btn-circle btn-plus" onclick="window.abrirModal('${item.id}', '${item.nombre}', ${item.precio})">+</button>
-                    </div>
-                </div>`;
-                if(item.tipo === 'picadas') cPicadas.innerHTML += html;
-                else cCaldos.innerHTML += html;
+            // Limpiar
+            cPlatos.innerHTML = ''; cJugos.innerHTML = '';
+
+            menuFijo.forEach(item => {
+                const html = crearHTMLItem(item.id, item.nombre, item.precio);
+                if(item.cat === 'platos') cPlatos.innerHTML += html;
+                else cJugos.innerHTML += html;
             });
         }
-        initMenu();
 
-        // 2. ESCUCHAR BEBIDAS (CONFIGURACIÓN)
-        onValue(ref(db, 'config_bebidas'), (snap) => {
-            bebidasDinamicas = snap.val() || {};
-            renderBebidas();
+        function crearHTMLItem(id, nombre, precio, esExtra = false) {
+            const btnBorrar = esExtra ? `<button onclick="window.borrarExtra('${id}')" style="background:none; border:none; color:red; margin-left:5px;"><i class="fas fa-trash"></i></button>` : '';
+            
+            return `
+            <div class="row-item">
+                <div class="item-desc">
+                    <span class="item-name">${nombre} ${btnBorrar}</span>
+                    <span class="item-price">$${precio.toFixed(2)}</span>
+                </div>
+                <div class="controls">
+                    <button class="btn-circle btn-sub" onclick="window.restar('${id}')">-</button>
+                    <span id="badge_${id}" class="badge">0</span>
+                    <button class="btn-circle btn-add" onclick="window.abrirModal('${id}', '${nombre}')">+</button>
+                </div>
+            </div>`;
+        }
+
+        initUI();
+
+        // 2. ESCUCHAR EXTRAS
+        onValue(ref(db, 'config_extras'), (snap) => {
+            extrasConfig = snap.val() || {};
+            const cExtras = document.getElementById('lista-extras');
+            cExtras.innerHTML = '';
+            Object.keys(extrasConfig).forEach(k => {
+                cExtras.innerHTML += crearHTMLItem(k, extrasConfig[k].nombre, extrasConfig[k].precio, true);
+            });
+            actualizarContadores();
         });
 
-        function renderBebidas() {
-            const container = document.getElementById('lista-bebidas');
-            container.innerHTML = '';
+        // 3. ESCUCHAR VENTAS Y GASTOS HOY
+        onValue(ref(db, 'dia_actual'), (snap) => {
+            document.getElementById('status').innerText = "🟢 En línea";
+            const data = snap.val() || {};
+            datosHoy.ventas = data.ventas || {};
+            datosHoy.gastos = data.gastos || {};
+            actualizarContadores();
+            actualizarGrafica();
+            renderListaGastos();
+        });
+
+        // --- LÓGICA MODAL Y PAGOS ---
+        window.abrirModal = (id, nombre) => {
+            itemSeleccionado = id;
+            document.getElementById('modal-titulo').innerText = nombre;
+            document.getElementById('modal-pago').style.display = 'flex';
+        };
+
+        window.cerrarModal = () => {
+            document.getElementById('modal-pago').style.display = 'none';
+            itemSeleccionado = null;
+        };
+
+        window.pagar = (metodo) => { // metodo = efectivo o transferencia
+            if(!itemSeleccionado) return;
+            // Guardar en: dia_actual/ventas/ID_ITEM/METODO
+            const current = (datosHoy.ventas[itemSeleccionado] && datosHoy.ventas[itemSeleccionado][metodo]) || 0;
+            const updateData = {};
+            updateData[`dia_actual/ventas/${itemSeleccionado}/${metodo}`] = current + 1;
             
-            Object.keys(bebidasDinamicas).forEach(key => {
-                const item = bebidasDinamicas[key];
-                const html = `
-                <div class="item-row">
-                    <div class="item-info">
-                        <div>${item.nombre} <button class="btn-trash" onclick="window.borrarBebidaConfig('${key}')"><i class="fas fa-trash"></i></button></div>
-                        <div class="item-price">$${item.precio}</div>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-circle btn
+            update(ref(db), updateData);
+            window.cerrarModal();
+        };
+
+        window.restar = (id) => {
+            const data = datosHoy.ventas[id] || {};
+            const efec = data.efectivo || 0;
+            const trans = data.transferencia || 0;
+
+            // Prioridad: restar efectivo, luego transferencia
+            if(efec > 0) {
+                update(ref(db), { [`dia_actual/ventas/${id}/efectivo`]: efec - 1 });
+            } else if (trans > 0) {
+                update(ref(db), { [`dia_actual/ventas/${id}/transferencia`]: trans - 1 });
+            }
+        };
+
+        // --- CÁLCULOS ---
+        function getPrecio(id) {
+            const fijo = menuFijo.find(x => x.id === id);
+            if(fijo) return fijo.precio;
+            if(extrasConfig[id]) return parseFloat(extrasConfig[id].precio);
+            return 0;
+        }
+
+        function actualizarContadores() {
+            let tEfec = 0, tTrans = 0;
+
+            // Recorrer todas las ventas registradas
+            Object.keys(datosHoy.ventas).forEach(id => {
+                const v = datosHoy.ventas[id];
+                const cant = (v.efectivo || 0) + (v.transferencia || 0);
+                const precio = getPrecio(id);
+
+                // Actualizar badge visual
+                const badge = document.getElementById('badge_' + id);
+                if(badge) badge.innerText = cant;
+
+                // Sumar dinero
+                tEfec += (v.efectivo || 0) * precio;
+                tTrans += (v.transferencia || 0) * precio;
+            });
+
+            // Gastos
+            let tGastos = 0;
+            Object.values(datosHoy.gastos).forEach(g => tGastos += g.monto);
+
+            // Pintar Totales
+            document.getElementById('lbl-efec').innerText = '$' + tEfec.toFixed(2);
+            document.getElementById('lbl-trans').innerText = '$' + tTrans.toFixed(2);
+            document.getElementById('lbl-gastos').innerText = '$' + tGastos.toFixed(2);
+            document.getElementById('lbl-total').innerText = '$' + (tEfec + tTrans).toFixed(2);
+            
+            // Neto = (Ventas - Gastos)
+            const neto = (tEfec + tTrans) - tGastos;
+            document.getElementById('lbl-neto').innerText = '$' + neto.toFixed(2);
+        }
+
+        // --- EXTRAS DINÁMICOS ---
+        window.toggleFormBebida = () => {
+            document.getElementById('form-bebida').classList.toggle('hidden');
+        };
+        window.crearBebida = () => {
+            const n = document.getElementById('new-name').value;
+            const p = document.getElementById('new-price').value;
+            if(n && p) {
+                push(ref(db, 'config_extras'), { nombre: n, precio: p });
+                document.getElementById('new-name').value = '';
+                document.getElementById('new-price').value = '';
+                window.toggleFormBebida();
+            }
+        };
+        window.borrarExtra = (id) => {
+            if(confirm("¿Borrar este producto para siempre?")) remove(ref(db, `config_extras/${id}`));
+        };
+
+        // --- GASTOS ---
+        window.registrarGasto = () => {
+            const d = document.getElementById('gasto-desc').value;
+            const m = parseFloat(document.getElementById('gasto-monto').value);
+            if(d && m) {
+                push(ref(db, 'dia_actual/gastos'), { desc: d, monto: m });
+                document.getElementById('gasto-desc').value = '';
+                document.getElementById('gasto-monto').value = '';
+                alert("Gasto Registrado");
+            }
+        };
+        function renderListaGastos() {
+            const ul = document.getElementById('lista-gastos-hoy');
+            ul.innerHTML = '';
+            Object.values(datosHoy.gastos).forEach(g => {
+                ul.innerHTML += `<li>${g.desc}: -$${g.monto.toFixed(2)}</li>`;
+            });
+        }
+
+        // --- GRÁFICA (LO QUE PEDISTE: VERDE Y NARANJA) ---
+        function actualizarGrafica() {
+            const lblTotal = parseFloat(document.getElementById('lbl-total').innerText.replace('$',''));
+            const lblGastos = parseFloat(document.getElementById('lbl-gastos').innerText.replace('$',''));
+            const gananciaReal = Math.max(0, lblTotal - lblGastos);
+
+            const ctx = document.getElementById('miGrafica').getContext('2d');
+            if(miGrafica) miGrafica.destroy();
+
+            miGrafica = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Ganancia Neta', 'Gastos/Pérdida'],
+                    datasets: [{
+                        data: [gananciaReal, lblGastos],
+                        backgroundColor: ['#2ecc71', '#e67e22'], // Verde claro y Naranja
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- CIERRE E HISTORIAL ---
+        window.cerrarCaja = () => {
+            if(!confirm("¿Cerrar caja y guardar historial?")) return;
+            
+            // Crear resumen texto
+            let itemsTxt = [];
+            const getName = (id) => {
+                const f = menuFijo.find(x=>x.id===id);
+                if(f) return f.nombre;
+                if(extrasConfig[id]) return extrasConfig[id].nombre;
+                return "Item";
+            };
+
+            Object.keys(datosHoy.ventas).forEach(id => {
+                const v = datosHoy.ventas[id];
+                if((v.efectivo||0) + (v.transferencia||0) > 0) {
+                    itemsTxt.push(`${getName(id)}: ${v.efectivo||0} Efec / ${v.transferencia||0} Trans`);
+                }
+            });
+
+            const reporte = {
+                fecha: new Date().toLocaleString(),
+                total: document.getElementById('lbl-total').innerText,
+                efectivo: document.getElementById('lbl-efec').innerText,
+                transferencia: document.getElementById('lbl-trans').innerText,
+                gastos: document.getElementById('lbl-gastos').innerText,
+                neto: document.getElementById('lbl-neto').innerText,
+                detalles: itemsTxt
+            };
+
+            push(ref(db, 'historial'), reporte).then(() => {
+                remove(ref(db, 'dia_actual'));
+                alert("✅ Caja Cerrada Correctamente");
+            });
+        };
+
+  
