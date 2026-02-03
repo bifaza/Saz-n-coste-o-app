@@ -3,138 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ventas & Gastos</title>
+    <title>App Negocio V3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f3; padding: 15px; max-width: 800px; margin: auto; padding-bottom: 100px; }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
-        h4 { text-align: center; color: #7f8c8d; margin-top: 0; }
+        /* TEMAS (Variables CSS) */
+        :root {
+            --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #333;
+            --primary: #ff9f43; --accent: #ff6b6b; --btn-text: white;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05); --radius: 16px;
+        }
         
-        .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .titulo-seccion { font-size: 1.2em; font-weight: bold; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Botones y Contadores */
-        .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
-        .item-info { display: flex; flex-direction: column; }
-        .item-name { font-weight: 600; font-size: 1em; }
-        .item-price { font-size: 0.85em; color: #7f8c8d; }
-        
-        .btn-group { display: flex; gap: 8px; align-items: center; }
-        button { border: none; border-radius: 8px; cursor: pointer; color: white; touch-action: manipulation; font-weight: bold; }
-        .btn-mas { background-color: #27ae60; padding: 5px 12px; font-size: 1.2em; }
-        .btn-menos { background-color: #e74c3c; padding: 5px 12px; font-size: 1.2em; }
-        .contador { font-size: 1.2em; font-weight: bold; min-width: 30px; text-align: center; }
+        body.dark-mode {
+            --bg-color: #1e272e; --card-bg: #2d3436; --text-color: #dfe6e9;
+            --primary: #0984e3; --accent: #00cec9; --shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
 
-        /* Sección Gastos */
-        .gastos-form { display: flex; gap: 5px; margin-bottom: 10px; }
-        .input-gasto { padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 100%; }
-        .btn-gasto { background-color: #d35400; padding: 10px; width: 100%; }
-        .lista-gastos { list-style: none; padding: 0; font-size: 0.9em; color: #c0392b; }
-        .lista-gastos li { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 5px 0; }
+        body.warm-mode { /* Por defecto */ }
 
-        /* Botón crear producto */
-        .btn-crear { background-color: #3498db; padding: 8px 15px; font-size: 0.9em; width: 100%; margin-top: 10px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; padding-bottom: 140px; transition: 0.3s; }
+
+        /* HEADER & TEMAS */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .theme-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-color); }
+
+        /* TARJETAS */
+        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .titulo { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* ACORDEÓN (DETAILS) */
+        details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+        summary { background: var(--card-bg); padding: 15px; cursor: pointer; font-weight: bold; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        summary::after { content: '+'; font-size: 1.2rem; }
+        details[open] summary::after { content: '-'; }
+        details[open] summary { border-bottom: 1px solid #eee; background-color: rgba(0,0,0,0.02); }
+        .details-content { padding: 10px; }
+
+        /* ITEMS DE VENTA */
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .item-info div { font-size: 0.9rem; font-weight: 600; }
+        .item-price { font-size: 0.8rem; opacity: 0.7; }
         
-        /* Totales y Gráfica */
-        .total-box { background: #2c3e50; color: white; padding: 15px; border-radius: 12px 12px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-width: 800px; margin: auto; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-        .resumen-flex { display: flex; justify-content: space-between; align-items: center; }
-        .balance-grande { font-size: 1.8em; font-weight: bold; }
-        .btn-cerrar { background-color: #c0392b; font-size: 0.8em; padding: 8px; margin-top: 10px; width: 100%; }
-        
-        .chart-container { position: relative; height: 200px; width: 100%; }
+        /* CONTADORES */
+        .btn-group { display: flex; align-items: center; gap: 8px; }
+        .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-plus { background: var(--primary); color: white; }
+        .btn-minus { background: #e74c3c; color: white; opacity: 0.8; }
+        .btn-trash { background: none; color: #e74c3c; border: none; }
+        .count-badge { font-size: 0.9rem; font-weight: bold; min-width: 20px; text-align: center; }
 
-        /* Historial */
-        .historial-item { background: #f9f9f9; padding: 10px; border-left: 5px solid #3498db; margin-bottom: 5px; }
-        .fecha { font-weight: bold; color: #2980b9; }
+        /* MODAL DE PAGO */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popUp 0.3s ease; }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .btn-pay { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-efectivo { background: #27ae60; }
+        .btn-transf { background: #3498db; }
+        .btn-cancel { background: #95a5a6; }
 
-        /* Pestañas */
-        .tabs { display: flex; margin-bottom: 15px; gap: 10px; }
-        .tab-btn { flex: 1; padding: 10px; background: #ddd; color: #333; text-align: center; border-radius: 8px; }
-        .tab-btn.active { background: #2c3e50; color: white; }
+        /* FOOTER TOTALES */
+        .footer-total { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 100; }
+        .grid-totales { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; font-size: 0.8rem; }
+        .total-item { background: rgba(0,0,0,0.03); padding: 8px; border-radius: 8px; }
+        .total-big { font-size: 1.5rem; font-weight: 800; text-align: center; color: var(--primary); }
+        .btn-cerrar { width: 100%; background: var(--text-color); color: var(--bg-color); padding: 12px; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; }
+
+        /* GASTOS & INPUTS */
+        .input-modern { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 5px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; }
+
+        /* TABS */
+        .tabs { display: flex; margin-bottom: 15px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 12px; }
+        .tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #888; }
+        .tab.active { background: var(--card-bg); color: var(--primary); shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .hidden { display: none; }
+        
+        .historial-card { border-left: 4px solid var(--primary); margin-bottom: 10px; padding: 10px; font-size: 0.85rem; background: rgba(0,0,0,0.02); }
     </style>
 </head>
-<body>
+<body class="warm-mode">
 
-    <h1>📊 Control Negocio</h1>
-    <h4 id="estado-conexion">Conectando...</h4>
+    <div class="header">
+        <h2 style="margin:0;">🔥 Mi Negocio</h2>
+        <button class="theme-btn" onclick="cambiarTema()">🎨</button>
+    </div>
 
     <div class="tabs">
-        <div class="tab-btn active" onclick="mostrarTab('tab-ventas')">Ventas</div>
-        <div class="tab-btn" onclick="mostrarTab('tab-gastos')">Gastos</div>
-        <div class="tab-btn" onclick="mostrarTab('tab-historial')">Historial</div>
+        <div class="tab active" onclick="setTab('ventas')">Ventas</div>
+        <div class="tab" onclick="setTab('gastos')">Gastos</div>
+        <div class="tab" onclick="setTab('historial')">Historial</div>
     </div>
 
-    <div id="tab-ventas">
+    <div id="view-ventas">
+        
+        <details class="card">
+            <summary>🍖 Picadas</summary>
+            <div class="details-content">
+                <div id="lista-picadas"></div>
+            </div>
+        </details>
+
+        <details class="card">
+            <summary>🍲 Caldos de Manguera</summary>
+            <div class="details-content">
+                <div id="lista-caldos"></div>
+            </div>
+        </details>
+
+        <div class="card">
+            <div class="titulo">
+                🥤 Bebidas y Jugos
+                <button class="btn-circle btn-plus" style="width:24px; height:24px; font-size:0.8rem;" onclick="toggleAddBebida()">+</button>
+            </div>
+            
+            <div id="form-bebida" class="hidden" style="background: rgba(0,0,0,0.03); padding:10px; border-radius:10px; margin-bottom:10px;">
+                <input type="text" id="new-bebida-name" placeholder="Nombre (ej: Jugo Mora)" class="input-modern">
+                <input type="number" id="new-bebida-price" placeholder="Precio (ej: 1.50)" class="input-modern">
+                <button class="btn-action" onclick="crearBebida()">Guardar</button>
+            </div>
+
+            <div id="lista-bebidas"></div>
+        </div>
+    </div>
+
+    <div id="view-gastos" class="hidden">
+        <div class="card">
+            <div class="titulo">💸 Registrar Salida/Pérdida</div>
+            <input type="text" id="gasto-desc" placeholder="Motivo (ej: Vuelto, Hielo)" class="input-modern">
+            <input type="number" id="gasto-monto" placeholder="Monto $" class="input-modern">
+            <button class="btn-action" style="background: #e74c3c;" onclick="registrarGasto()">Registrar Gasto</button>
+        </div>
         
         <div class="card">
-            <div class="titulo-seccion">🥘 Platos Principales</div>
-            <div id="container-platos"></div> </div>
+            <div class="titulo">Movimientos de Hoy</div>
+            <ul id="lista-gastos-hoy" style="padding-left:20px; font-size:0.9rem;"></ul>
+        </div>
+    </div>
 
+    <div id="view-historial" class="hidden">
         <div class="card">
-            <div class="titulo-seccion">🥤 Bebidas y Jugos</div>
-            <div id="container-bebidas"></div> </div>
+            <div class="titulo">📅 Cierres Anteriores</div>
+            <div id="lista-historial">Cargando...</div>
+        </div>
+    </div>
 
-        <div class="card">
-            <div class="titulo-seccion">
-                ✨ Extras / Nuevos
-                <button style="background:transparent; color:#3498db; font-size:0.8em;" onclick="toggleCrear()">+ Nuevo</button>
-            </div>
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal-content">
+            <h3 id="modal-item-name" style="margin-top:0;">Producto</h3>
+            <p style="color:#777; font-size:0.9rem;">Selecciona el método de pago:</p>
             
-            <div id="form-crear-prod" style="display:none; background:#f0f8ff; padding:10px; margin-bottom:10px; border-radius:5px;">
-                <input type="text" id="nuevo-nombre" placeholder="Nombre (ej: Postre)" class="input-gasto" style="margin-bottom:5px;">
-                <input type="number" id="nuevo-precio" placeholder="Precio (ej: 2.50)" class="input-gasto" style="margin-bottom:5px;">
-                <button class="btn-crear" onclick="crearProducto()">Guardar Producto</button>
+            <button class="btn-pay btn-efectivo" onclick="confirmarPago('efectivo')">
+                <i class="fas fa-money-bill-wave"></i> Efectivo
+            </button>
+            <button class="btn-pay btn-transf" onclick="confirmarPago('transferencia')">
+                <i class="fas fa-mobile-alt"></i> Transferencia
+            </button>
+            <button class="btn-pay btn-cancel" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="footer-total">
+        <div class="grid-totales">
+            <div class="total-item" style="color: #27ae60;">
+                <i class="fas fa-money-bill"></i> Efec: <span id="lbl-efectivo">$0.00</span>
             </div>
-
-            <div id="container-extras"></div>
-        </div>
-    </div>
-
-    <div id="tab-gastos" class="hidden">
-        <div class="card">
-            <div class="titulo-seccion">💸 Registro de Gastos/Salidas</div>
-            <div class="gastos-form">
-                <input type="text" id="gasto-nombre" placeholder="Descripción (ej: Hielo)" class="input-gasto" style="flex:2;">
-                <input type="number" id="gasto-monto" placeholder="$" class="input-gasto" style="flex:1;">
+            <div class="total-item" style="color: #3498db;">
+                <i class="fas fa-mobile"></i> Transf: <span id="lbl-transf">$0.00</span>
             </div>
-            <button class="btn-gasto" onclick="agregarGasto()">Registrar Gasto (Salida)</button>
-            
-            <h3 style="margin-top:20px;">Lista del día:</h3>
-            <ul id="lista-gastos-ul" class="lista-gastos"></ul>
-        </div>
-    </div>
-
-    <div id="tab-historial" class="hidden">
-        <div class="card">
-            <div class="titulo-seccion">📅 Cierres de Caja Anteriores</div>
-            <div id="container-historial">Cargando...</div>
-        </div>
-    </div>
-
-    <div class="card" style="margin-bottom: 120px;">
-        <div class="titulo-seccion">📈 Gráfica del Día</div>
-        <div class="chart-container">
-            <canvas id="miGrafica"></canvas>
-        </div>
-    </div>
-
-    <div class="total-box">
-        <div class="resumen-flex">
-            <div>
-                <small>Ventas: <span id="lbl-ventas" style="color:#2ecc71">$0.00</span></small><br>
-                <small>Gastos: <span id="lbl-gastos" style="color:#e74c3c">$0.00</span></small>
+            <div class="total-item" style="color: #e74c3c;">
+                <i class="fas fa-arrow-down"></i> Gastos: <span id="lbl-gastos">$0.00</span>
             </div>
-            <div class="balance-grande" id="lbl-balance">$0.00</div>
+            <div class="total-item" style="font-weight:bold;">
+                Neto: <span id="lbl-neto">$0.00</span>
+            </div>
         </div>
-        <button class="btn-cerrar" onclick="cerrarCaja()">🔒 CERRAR CAJA (Guardar y Reiniciar)</button>
+        <div class="total-big" id="lbl-total-global">$0.00</div>
+        <button class="btn-cerrar" onclick="cerrarCaja()">🔒 CERRAR CAJA Y GUARDAR</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, push, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // --- ⬇️ PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE ⬇️ ---
+        // --- ⬇️ PEGA AQUÍ TU LLAVE DE FIREBASE ⬇️ ---
        const firebaseConfig = {
   apiKey: "AIzaSyAIPTdjtcrpk1tziuPq0yOZIXfHWnugxcQ",
   authDomain: "sazoncosteno-3d6e2.firebaseapp.com",
@@ -144,266 +195,70 @@
   appId: "1:440978122168:web:3ad5bf278767ec00aa5b4d",
   measurementId: "G-H34849VKPN"
 };
-        // ----------------------------------------------------
+
+        // --------------------------------------------
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // CONFIGURACIÓN INICIAL DE PRODUCTOS FIJOS
-        const menuFijo = [
-            { id: 'picada_completa_mesa', nombre: 'Picada (Mesa)', precio: 4.00, cat: 'platos' },
-            { id: 'picada_completa_llevar', nombre: 'Picada (Llevar)', precio: 4.25, cat: 'platos' },
-            { id: 'picada_media_mesa', nombre: 'Media Picada (Mesa)', precio: 3.00, cat: 'platos' },
-            { id: 'picada_media_llevar', nombre: 'Media Picada (Llevar)', precio: 3.25, cat: 'platos' },
-            { id: 'caldo_completo_mesa', nombre: 'Caldo (Mesa)', precio: 4.00, cat: 'platos' },
-            { id: 'caldo_completo_llevar', nombre: 'Caldo (Llevar)', precio: 4.25, cat: 'platos' },
-            { id: 'caldo_medio_mesa', nombre: 'Medio Caldo (Mesa)', precio: 3.00, cat: 'platos' },
-            { id: 'caldo_medio_llevar', nombre: 'Medio Caldo (Llevar)', precio: 3.25, cat: 'platos' },
-            { id: 'limonada_vaso', nombre: 'Jugo Vaso', precio: 0.50, cat: 'bebidas' },
-            { id: 'limonada_jarra', nombre: 'Jugo Jarra', precio: 1.50, cat: 'bebidas' },
-            { id: 'sprite', nombre: 'Sprite', precio: 0.75, cat: 'bebidas' },
-            { id: 'fiora', nombre: 'Fiora', precio: 0.75, cat: 'bebidas' },
-            { id: 'inka', nombre: 'Inka', precio: 0.75, cat: 'bebidas' },
-            { id: 'coca', nombre: 'Coca Cola', precio: 0.75, cat: 'bebidas' },
-            { id: 'fanta', nombre: 'Fanta', precio: 0.75, cat: 'bebidas' }
+        // DATA ESTRUCTURA
+        const menuPlatos = [
+            { id: 'pic_comp_mesa', nombre: 'Picada Completa (Mesa)', precio: 4.00, tipo: 'picadas' },
+            { id: 'pic_comp_llev', nombre: 'Picada Completa (Llevar)', precio: 4.25, tipo: 'picadas' },
+            { id: 'pic_med_mesa', nombre: 'Media Picada (Mesa)', precio: 3.00, tipo: 'picadas' },
+            { id: 'pic_med_llev', nombre: 'Media Picada (Llevar)', precio: 3.25, tipo: 'picadas' },
+            
+            { id: 'cal_comp_mesa', nombre: 'Caldo Completo (Mesa)', precio: 4.00, tipo: 'caldos' },
+            { id: 'cal_comp_llev', nombre: 'Caldo Completo (Llevar)', precio: 4.25, tipo: 'caldos' },
+            { id: 'cal_med_mesa', nombre: 'Medio Caldo (Mesa)', precio: 3.00, tipo: 'caldos' },
+            { id: 'cal_med_llev', nombre: 'Medio Caldo (Llevar)', precio: 3.25, tipo: 'caldos' }
         ];
 
-        // Variables globales
-        let datosDia = { ventas: {}, gastos: {} };
-        let productosExtras = {};
-        let myChart = null;
+        let bebidasDinamicas = {};
+        let datosHoy = { ventas: {}, gastos: {} };
+        let itemPendiente = null; // Para el modal
 
-        // 1. INICIALIZAR PANTALLA
-        function renderMenuFijo() {
-            const cPlatos = document.getElementById('container-platos');
-            const cBebidas = document.getElementById('container-bebidas');
+        // 1. INICIALIZAR UI
+        function initMenu() {
+            const cPicadas = document.getElementById('lista-picadas');
+            const cCaldos = document.getElementById('lista-caldos');
             
-            menuFijo.forEach(item => {
+            menuPlatos.forEach(item => {
                 const html = `
                 <div class="item-row">
                     <div class="item-info">
-                        <span class="item-name">${item.nombre}</span>
-                        <span class="item-price">$${item.precio.toFixed(2)}</span>
+                        <div>${item.nombre}</div>
+                        <div class="item-price">$${item.precio.toFixed(2)}</div>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-menos" onclick="window.cambiarCant('${item.id}', -1)">-</button>
-                        <span id="cant_${item.id}" class="contador">0</span>
-                        <button class="btn-mas" onclick="window.cambiarCant('${item.id}', 1)">+</button>
+                        <button class="btn-circle btn-minus" onclick="window.restar('${item.id}')">-</button>
+                        <span id="cant_${item.id}" class="count-badge">0</span>
+                        <button class="btn-circle btn-plus" onclick="window.abrirModal('${item.id}', '${item.nombre}', ${item.precio})">+</button>
                     </div>
                 </div>`;
-                
-                if(item.cat === 'platos') cPlatos.innerHTML += html;
-                else cBebidas.innerHTML += html;
+                if(item.tipo === 'picadas') cPicadas.innerHTML += html;
+                else cCaldos.innerHTML += html;
             });
         }
-        renderMenuFijo();
+        initMenu();
 
-        // 2. ESCUCHAR PRODUCTOS EXTRAS (Dinámicos)
-        onValue(ref(db, 'config_menu_extras'), (snapshot) => {
-            const data = snapshot.val() || {};
-            productosExtras = data;
-            const container = document.getElementById('container-extras');
+        // 2. ESCUCHAR BEBIDAS (CONFIGURACIÓN)
+        onValue(ref(db, 'config_bebidas'), (snap) => {
+            bebidasDinamicas = snap.val() || {};
+            renderBebidas();
+        });
+
+        function renderBebidas() {
+            const container = document.getElementById('lista-bebidas');
             container.innerHTML = '';
-
-            Object.keys(data).forEach(key => {
-                const item = data[key];
+            
+            Object.keys(bebidasDinamicas).forEach(key => {
+                const item = bebidasDinamicas[key];
                 const html = `
-                <div class="item-row" style="background:#fdfefe; padding:5px;">
+                <div class="item-row">
                     <div class="item-info">
-                        <span class="item-name">${item.nombre}</span>
-                        <span class="item-price">$${item.precio}</span>
+                        <div>${item.nombre} <button class="btn-trash" onclick="window.borrarBebidaConfig('${key}')"><i class="fas fa-trash"></i></button></div>
+                        <div class="item-price">$${item.precio}</div>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-menos" onclick="window.cambiarCant('${key}', -1, true)">-</button>
-                        <span id="cant_${key}" class="contador">0</span>
-                        <button class="btn-mas" onclick="window.cambiarCant('${key}', 1, true)">+</button>
-                    </div>
-                </div>`;
-                container.innerHTML += html;
-            });
-            actualizarNumerosUI(); // Refrescar por si ya habia ventas cargadas
-        });
-
-        // 3. ESCUCHAR VENTAS Y GASTOS DEL DÍA (Tiempo Real)
-        onValue(ref(db, 'dia_actual'), (snapshot) => {
-            document.getElementById('estado-conexion').innerText = "🟢 Conectado";
-            const data = snapshot.val();
-            
-            datosDia.ventas = (data && data.ventas) ? data.ventas : {};
-            datosDia.gastos = (data && data.gastos) ? data.gastos : {};
-            
-            actualizarNumerosUI();
-            renderGastos();
-        });
-
-        // 4. FUNCIONES DE ACCIÓN
-        window.cambiarCant = (id, delta, esExtra = false) => {
-            const current = (datosDia.ventas[id] || 0);
-            const nuevo = current + delta;
-            if(nuevo < 0) return;
-
-            const updates = {};
-            updates['dia_actual/ventas/' + id] = nuevo;
-            update(ref(db), updates);
-        };
-
-        window.toggleCrear = () => {
-            const el = document.getElementById('form-crear-prod');
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
-        }
-
-        window.crearProducto = () => {
-            const nombre = document.getElementById('nuevo-nombre').value;
-            const precio = parseFloat(document.getElementById('nuevo-precio').value);
-            
-            if(nombre && precio) {
-                const newRef = push(ref(db, 'config_menu_extras'));
-                set(newRef, { nombre: nombre, precio: precio });
-                document.getElementById('nuevo-nombre').value = '';
-                document.getElementById('nuevo-precio').value = '';
-                alert("Producto agregado. Ahora todos pueden venderlo.");
-                window.toggleCrear();
-            }
-        };
-
-        window.agregarGasto = () => {
-            const desc = document.getElementById('gasto-nombre').value;
-            const monto = parseFloat(document.getElementById('gasto-monto').value);
-
-            if(desc && monto) {
-                const newRef = push(ref(db, 'dia_actual/gastos'));
-                set(newRef, { desc: desc, monto: monto });
-                document.getElementById('gasto-nombre').value = '';
-                document.getElementById('gasto-monto').value = '';
-            }
-        };
-
-        // 5. CÁLCULOS Y UI
-        function actualizarNumerosUI() {
-            let totalVentas = 0;
-
-            // Calcular ventas fijas
-            menuFijo.forEach(item => {
-                const cant = datosDia.ventas[item.id] || 0;
-                const el = document.getElementById('cant_' + item.id);
-                if(el) el.innerText = cant;
-                totalVentas += cant * item.precio;
-            });
-
-            // Calcular ventas extras
-            Object.keys(productosExtras).forEach(key => {
-                const cant = datosDia.ventas[key] || 0;
-                const el = document.getElementById('cant_' + key);
-                if(el) el.innerText = cant;
-                totalVentas += cant * productosExtras[key].precio;
-            });
-
-            // Calcular gastos
-            let totalGastos = 0;
-            if(datosDia.gastos) {
-                Object.values(datosDia.gastos).forEach(g => totalGastos += g.monto);
-            }
-
-            // Actualizar Etiquetas
-            const balance = totalVentas - totalGastos;
-            document.getElementById('lbl-ventas').innerText = '$' + totalVentas.toFixed(2);
-            document.getElementById('lbl-gastos').innerText = '-$' + totalGastos.toFixed(2);
-            document.getElementById('lbl-balance').innerText = '$' + balance.toFixed(2);
-
-            actualizarGrafica(totalVentas, totalGastos);
-        }
-
-        function renderGastos() {
-            const ul = document.getElementById('lista-gastos-ul');
-            ul.innerHTML = '';
-            if(datosDia.gastos) {
-                Object.values(datosDia.gastos).forEach(g => {
-                    ul.innerHTML += `<li><span>${g.desc}</span> <span>-$${g.monto.toFixed(2)}</span></li>`;
-                });
-            }
-        }
-
-        // 6. GRÁFICA (Chart.js)
-        function actualizarGrafica(ventas, gastos) {
-            const ctx = document.getElementById('miGrafica').getContext('2d');
-            
-            if(myChart) myChart.destroy();
-
-            myChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Ganancia Neta', 'Gastos/Costos'],
-                    datasets: [{
-                        data: [Math.max(0, ventas - gastos), gastos],
-                        backgroundColor: ['#2ecc71', '#f39c12'],
-                        borderWidth: 1
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        // 7. CIERRE DE CAJA E HISTORIAL
-        window.cerrarCaja = () => {
-            const confirmacion = confirm("¿CERRAR CAJA?\n\nSe guardará el total en el historial y se pondrán los contadores a CERO para mañana.");
-            if(!confirmacion) return;
-
-            const ventasVal = document.getElementById('lbl-ventas').innerText;
-            const gastosVal = document.getElementById('lbl-gastos').innerText;
-            const balanceVal = document.getElementById('lbl-balance').innerText;
-            
-            const fecha = new Date().toLocaleDateString('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-            const resumen = {
-                fecha: fecha,
-                total_ventas: ventasVal,
-                total_gastos: gastosVal,
-                balance_final: balanceVal
-            };
-
-            // Guardar en historial
-            push(ref(db, 'historial'), resumen)
-            .then(() => {
-                // Borrar día actual
-                remove(ref(db, 'dia_actual'));
-                alert("✅ Caja cerrada y guardada en historial.");
-            });
-        };
-
-        // Cargar Historial
-        const historialRef = ref(db, 'historial');
-        onValue(historialRef, (snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('container-historial');
-            if(!data) {
-                div.innerHTML = "No hay cierres guardados aún.";
-                return;
-            }
-            div.innerHTML = '';
-            // Convertir objeto a array y reversar para ver lo ultimo primero
-            const list = Object.values(data).reverse();
-            
-            list.forEach(item => {
-                div.innerHTML += `
-                <div class="historial-item">
-                    <div class="fecha">${item.fecha}</div>
-                    <div>Ventas: ${item.total_ventas} | Gastos: <span style="color:red">${item.total_gastos}</span></div>
-                    <div style="font-weight:bold; margin-top:5px;">Ganancia: ${item.balance_final}</div>
-                </div>`;
-            });
-        });
-
-        // Tabs simples
-        window.mostrarTab = (tabId) => {
-            document.getElementById('tab-ventas').classList.add('hidden');
-            document.getElementById('tab-gastos').classList.add('hidden');
-            document.getElementById('tab-historial').classList.add('hidden');
-            document.getElementById(tabId).classList.remove('hidden');
-
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-        };
-
-    </script>
-</body>
-</html>
+                        <button class="btn-circle btn
